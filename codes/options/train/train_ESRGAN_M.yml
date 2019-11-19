@@ -1,0 +1,86 @@
+#### general settings
+name: 001_esrgan_lite_x2_train_div2k_flickr2k_val_sep14_scratch
+use_tb_logger: true
+model: srgan
+distortion: sr
+scale: 2
+gpu_ids: [0,1]
+
+#### datasets
+datasets:
+  train:
+    name: DIV2K_FLICKR2K
+    mode: LQGT
+    interval_list: [1]
+    random_reverse: false
+    border_mode: false
+    dataroot_GT: /workspace/datasets/DIV2K/DIV2K_train_and_FLICKR2K.lmdb
+    dataroot_LQ: /workspace/datasets/DIV2K/DIV2K_train_and_FLICKR2K.lmdb
+    cache_keys: ~
+
+    N_frames: 5
+    use_shuffle: true
+    n_workers: 0  # per GPU
+    batch_size: 96
+    GT_size: 256
+    LQ_size: 128
+    use_flip: true
+    use_rot: true
+    color: RGB
+  val:
+    name: val_set14
+    mode: LQGT
+    dataroot_GT: ../datasets/Set14
+
+#### network structures
+network_G:
+  which_model_G: RRDBNet_lite
+  in_nc: 3
+  out_nc: 3
+  nf: 32
+  nb: 1
+network_D:
+  which_model_D: discriminator_vgg_128
+  in_nc: 3
+  nf: 64
+
+#### path
+path:
+  pretrain_model_G:
+  strict_load: true
+  resume_state:
+
+#### training settings: learning rate scheme, loss
+train:
+  lr_G: !!float 1e-4
+  weight_decay_G: 0
+  beta1_G: 0.9
+  beta2_G: 0.99
+  lr_D: !!float 1e-4
+  weight_decay_D: 0
+  beta1_D: 0.9
+  beta2_D: 0.99
+  lr_scheme: MultiStepLR
+
+  niter: 400000
+  warmup_iter: -1  # no warm up
+  lr_steps: [50000, 100000, 200000, 300000]
+  lr_gamma: 0.5
+
+  pixel_criterion: l1
+  pixel_weight: !!float 1e-2
+  feature_criterion: l1
+  feature_weight: 1
+  gan_type: ragan  # gan | ragan
+  gan_weight: !!float 5e-3
+
+  D_update_ratio: 1
+  D_init_iters: 0
+
+  manual_seed: 10
+  val_freq: !!float 5e3
+
+#### logger
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 5e3
