@@ -27,7 +27,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -64,6 +63,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+.pytest_cache/
 
 # Translations
 *.mo
@@ -71,11 +71,17 @@ coverage.xml
 
 # Django stuff:
 *.log
+<<<<<<< HEAD
 */log/*
 local_settings.py
 
 # Flask stuff:
 # instance/
+local_settings.py
+db.sqlite3
+
+# Flask stuff:
+instance/
 .webassets-cache
 
 # Scrapy stuff:
@@ -106,6 +112,14 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # Spyder project settings
 .spyderproject
