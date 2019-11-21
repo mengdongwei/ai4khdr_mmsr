@@ -2,7 +2,6 @@ import torch
 import models.archs.SRResNet_arch as SRResNet_arch
 import models.archs.discriminator_vgg_arch as SRGAN_arch
 import models.archs.RRDBNet_arch as RRDBNet_arch
-import models.archs.EDVR_arch as EDVR_arch
 
 
 # Generator
@@ -22,6 +21,14 @@ def define_G(opt):
                                     nf=opt_net['nf'], nb=opt_net['nb'])
     # video restoration
     elif which_model == 'EDVR':
+        import models.archs.EDVR_arch as EDVR_arch
+        netG = EDVR_arch.EDVR(nf=opt_net['nf'], nframes=opt_net['nframes'],
+                              groups=opt_net['groups'], front_RBs=opt_net['front_RBs'],
+                              back_RBs=opt_net['back_RBs'], center=opt_net['center'],
+                              predeblur=opt_net['predeblur'], HR_in=opt_net['HR_in'],
+                              w_TSA=opt_net['w_TSA'])
+    elif which_model == 'EDVR_wn':
+        import models.archs.EDVR_arch_wn as EDVR_arch
         netG = EDVR_arch.EDVR(nf=opt_net['nf'], nframes=opt_net['nframes'],
                               groups=opt_net['groups'], front_RBs=opt_net['front_RBs'],
                               back_RBs=opt_net['back_RBs'], center=opt_net['center'],

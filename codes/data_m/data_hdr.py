@@ -63,8 +63,8 @@ class ValidDataset(Dataset):
         self.crop_size = crop_size
         self.scale = scale
         self.n_frames = n_frames
-        hr_root = '/workspace/datasets/AI_4K_HDR/valid/valid_4k_frame_list_file.txt'
-        lr_root = '/workspace/datasets/AI_4K_HDR/valid/valid_540p_frame_list_file.txt'
+        hr_root = '/workspace/nas_mengdongwei/dataset/AI4KHDR/valid/valid_4k_frame_list_file.txt'
+        lr_root = '/workspace/nas_mengdongwei/dataset/AI4KHDR/valid/valid_540p_frame_list_file.txt'
 
         self.hr_paths_list, self.num_hr_video, num_hr_img_per_video = get_frames_path(hr_root)
         self.lr_paths_list, self.num_lr_video, num_lr_img_per_video = get_frames_path(lr_root)
@@ -76,11 +76,16 @@ class ValidDataset(Dataset):
         self.num_img_per_video = num_hr_img_per_video
 
     def __len__(self):
-        return self.num_sample // 30
+        return 600 #self.num_sample
 
     def __getitem__(self, index):
-        video_index = random.randint(0, self.num_video-1)
-        frame_index = random.randint(self.n_frames//2 + 1, self.num_img_per_video[video_index] - (self.n_frames//2 + 1) - 1)
+        video_index = index // 100 #random.randint(0, self.num_video-1)
+        frame_index = index % 100
+        if frame_index < 2:
+            frame_index == 2
+        elif frame_index > 97:
+            frame_index = 97
+        #frame_index = random.randint(self.n_frames//2 + 1, self.num_img_per_video[video_index] - (self.n_frames//2 + 1) - 1)
 
         hr = np.array(Image.open(self.hr_paths_list[video_index][frame_index]))
         lrs = []

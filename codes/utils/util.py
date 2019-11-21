@@ -60,11 +60,14 @@ def mkdirs(paths):
 def mkdir_and_rename(path):
     if os.path.exists(path):
         new_name = path + '_archived_' + get_timestamp()
-        print('Path already exists. Rename it to [{:s}]'.format(new_name))
+        print('save to new path[{:s}]'.format(new_name))
         logger = logging.getLogger('base')
-        logger.info('Path already exists. Rename it to [{:s}]'.format(new_name))
-        os.rename(path, new_name)
-    os.makedirs(path)
+        logger.info(' save to new path [{:s}]'.format(new_name))
+        mkdir(new_name)
+        return new_name
+    else:
+        mkdir(path)
+        return path
 
 
 def set_random_seed(seed):

@@ -39,8 +39,8 @@ class ResidualBlock_noBN(nn.Module):
 
     def __init__(self, nf=64):
         super(ResidualBlock_noBN, self).__init__()
-        self.conv1 = nn.Conv2d(nf, nf, 3, 1, 1, bias=True)
-        self.conv2 = nn.Conv2d(nf, nf, 3, 1, 1, bias=True)
+        self.conv1 = wn(nn.Conv2d(nf, nf, 3, 1, 1, bias=True))
+        self.conv2 = wn(nn.Conv2d(nf, nf, 3, 1, 1, bias=True))
 
         # initialization
         initialize_weights([self.conv1, self.conv2], 0.1)
@@ -51,26 +51,28 @@ class ResidualBlock_noBN(nn.Module):
         out = self.conv2(out)
         return identity + out
 
+wn = lambda x: torch.nn.utils.weight_norm(x)
+
 class make_dense(nn.Module):
   def __init__(self, nChannels, growthRate, kernel_size=3):
     super(make_dense, self).__init__()
-    self.conv = nn.Conv2d(nChannels, growthRate, kernel_size=kernel_size, padding=(kernel_size-1)//2, bias=False)
+    self.conv = wn( nn.Conv2d(nChannels, growthRate, kernel_size=kernel_size, padding=(kernel_size-1)//2, bias=False))
   def forward(self, x):
     out = F.relu(self.conv(x))
     out = torch.cat((x, out), 1)
     return out
 
 # Residual dense block (RDB) architecture
-class ResidualDenseBlock_noBN(nn.Module):
-  def __init__(self, nChannels=64, nDenselayer=6, growthRate=64):
-    super(ResidualDenseBlock_noBN, self).__init__()
+class RDB(nn.Module):
+  def __init__(self, nChannels=64, nDenselayer=6, growthRate=32):
+    super(RDB, self).__init__()
     nChannels_ = nChannels
     modules = []
     for i in range(nDenselayer):
         modules.append(make_dense(nChannels_, growthRate))
         nChannels_ += growthRate
     self.dense_layers = nn.Sequential(*modules)
-    self.conv_1x1 = nn.Conv2d(nChannels_, nChannels, kernel_size=1, padding=0, bias=False)
+    self.conv_1x1 = wn(nn.Conv2d(nChannels_, nChannels, kernel_size=1, padding=0, bias=False))
   def forward(self, x):
     out = self.dense_layers(x)
     out = self.conv_1x1(out)
