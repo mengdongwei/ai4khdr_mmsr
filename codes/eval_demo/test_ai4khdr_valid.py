@@ -9,12 +9,22 @@ import logging
 import numpy as np
 import cv2
 import torch
+import torch.distributed as dist
+import torch.multiprocessing as mp
 
 import utils.util as util
 import data.util as data_util
 import models.archs.EDVR_arch as EDVR_arch
 from utils import crash_on_ipy
 
+def init_dist(backend='nccl', **kwargs):
+    """initialization for distributed training"""
+    if mp.get_start_method(allow_none=True) != 'spawn':
+        mp.set_start_method('spawn')
+    rank = int(os.environ['RANK'])
+    num_gpus = torch.cuda.device_count()
+    torch.cuda.set_device(rank % num_gpus)
+    dist.init_process_group(backend=backend, **kwargs)
 
 def main():
     #################
@@ -22,14 +32,17 @@ def main():
     #################
     device = torch.device('cuda')
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    init_dist()
+    rank = torch.distributed.get_rank()
     data_mode = 'ai4khdr_valid'
+    train_flag = 'edvr_m_wn'
     flip_test = False
 
     ############################################################################
     #### model
     #################
     if data_mode == 'ai4khdr_valid':
-        model_path = '../experiments/002_EDVR_lr4e-4_600k_AI4KHDR/models/4000_G.pth'
+        model_path = '/workspace/nas_mengdongwei/mmsr/experiments/002_EDVR_wn_lr4e-4_600k_AI4KHDR/models/14000_G.pth'
     else:
         raise NotImplementedError
     N_in = 5
@@ -58,7 +71,7 @@ def main():
         padding = 'replicate'
     save_imgs = True
 
-    save_folder = '../results/{}_{}'.format(data_mode, util.get_timestamp())
+    save_folder = '../results/{}_{}_{}'.format(data_mode, train_flag, util.get_timestamp())
     util.mkdirs(save_folder)
     util.setup_logger('base', save_folder, 'test', level=logging.INFO, screen=True, tofile=True)
     logger = logging.getLogger('base')

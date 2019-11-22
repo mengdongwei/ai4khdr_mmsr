@@ -105,19 +105,23 @@ class VideoBaseModel(BaseModel):
     def feed_data(self, data, flag=1):
         self.var_L = data['LQ'].to(self.device)  # LQ
         if flag == 1:
-            ##### training with LQX2
+            ##### training with
             self.real_H = data['GT'].to(self.device)  # GT
-            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
-            self.var_L, self.real_H, self.LQX2 = self.mixup_enhance(self.var_L, self.real_H, self.LQX2)
+            self.var_L, self.real_H = self.mixup_enhance(self.var_L, self.real_H)
         elif flag == 2:
-            ##### valid with LQX2
+            ##### valid with
             self.real_H = data['GT'].to(self.device)  # GT
-            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
         elif flag == 3:
             ##### test without GT
             self.real_H = None
-            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
 
+    def mixup_enhance(self, lrs, hrs, alpha=2):
+        lam = np.random.beta(alpha, alpha)
+        assert (lrs.shape[0] % 2) == 0
+        lrs[0::2] = lrs[0::2] * lam + (1 - lam) * lrs[1::2]
+        hrs[0::2] = hrs[0::2] * lam + (1 - lam) * hrs[1::2]
+        return lrs, hrs
+    
     def set_params_lr_zero(self):
         # fix normal module
         self.optimizers[0].param_groups[0]['lr'] = 0
