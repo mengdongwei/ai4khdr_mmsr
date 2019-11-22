@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict
-
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -102,15 +102,21 @@ class VideoBaseModel(BaseModel):
 
             self.log_dict = OrderedDict()
 
-    def feed_data_backup(self, data, need_GT=True):
-        self.var_L = data[0].to(self.device)
-        if need_GT:
-            self.real_H = data[1].to(self.device)
-
-    def feed_data(self, data, need_GT=True):
-        self.var_L = data[0].to(self.device)
-        if need_GT:
-            self.real_H = data[1].to(self.device)
+    def feed_data(self, data, flag=1):
+        self.var_L = data['LQ'].to(self.device)  # LQ
+        if flag == 1:
+            ##### training with LQX2
+            self.real_H = data['GT'].to(self.device)  # GT
+            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
+            self.var_L, self.real_H, self.LQX2 = self.mixup_enhance(self.var_L, self.real_H, self.LQX2)
+        elif flag == 2:
+            ##### valid with LQX2
+            self.real_H = data['GT'].to(self.device)  # GT
+            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
+        elif flag == 3:
+            ##### test without GT
+            self.real_H = None
+            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
 
     def set_params_lr_zero(self):
         # fix normal module

@@ -2,6 +2,7 @@ import torch
 import models.archs.SRResNet_arch as SRResNet_arch
 import models.archs.discriminator_vgg_arch as SRGAN_arch
 import models.archs.RRDBNet_arch as RRDBNet_arch
+import models.archs.NaiveNet_arch as NaiveNet_arch
 
 
 # Generator
@@ -18,6 +19,15 @@ def define_G(opt):
                                     nf=opt_net['nf'], nb=opt_net['nb'])
     elif which_model == 'RRDBNet_lite':
         netG = RRDBNet_arch.RRDBNet_lite(in_nc=opt_net['in_nc'], out_nc=opt_net['out_nc'],
+                                    nf=opt_net['nf'], nb=opt_net['nb'])
+    elif which_model == 'NaiveNetV1':
+        netG = NaiveNet_arch.NaiveNetV1(in_nc=opt_net['in_nc'], out_nc=opt_net['out_nc'],
+                                    nf=opt_net['nf'], nb=opt_net['nb'])
+    elif which_model == 'NaiveNetV2':
+        netG = NaiveNet_arch.NaiveNetV2(in_nc=opt_net['in_nc'], out_nc=opt_net['out_nc'],
+                                    nf=opt_net['nf'], nb=opt_net['nb'])
+    elif which_model == 'NaiveNetV3':
+        netG = NaiveNet_arch.NaiveNetV3(in_nc=opt_net['in_nc'], out_nc=opt_net['out_nc'],
                                     nf=opt_net['nf'], nb=opt_net['nb'])
     # video restoration
     elif which_model == 'EDVR':

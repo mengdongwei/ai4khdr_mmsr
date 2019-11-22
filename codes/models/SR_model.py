@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict
-
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -16,6 +16,7 @@ class SRModel(BaseModel):
     def __init__(self, opt):
         super(SRModel, self).__init__(opt)
 
+        self.mse_criterion = nn.MSELoss()
         if opt['dist']:
             self.rank = torch.distributed.get_rank()
         else:
@@ -81,25 +82,66 @@ class SRModel(BaseModel):
 
             self.log_dict = OrderedDict()
 
-    def feed_data(self, data, need_GT=True):
+    def feed_data(self, data, flag=1):
         self.var_L = data['LQ'].to(self.device)  # LQ
-        if need_GT:
+        if flag == 1:
+            ##### training with LQX2, and mixup
             self.real_H = data['GT'].to(self.device)  # GT
+            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
+            self.var_L, self.real_H, self.LQX2 = self.mixup_enhance(self.var_L, self.real_H, self.LQX2)
+        elif flag == 2:
+            ##### valid with LQX2, without mixup
+            self.real_H = data['GT'].to(self.device)  # GT
+            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
+        elif flag == 3:
+            ##### test without GT
+            self.real_H = None
+            self.LQX2 = data['LQX2'].to(self.device)  # LQX2
 
     def optimize_parameters(self, step):
         self.optimizer_G.zero_grad()
-        self.fake_H = self.netG(self.var_L)
+        self.fake_H = self.netG(self.var_L, self.LQX2)
         l_pix = self.l_pix_w * self.cri_pix(self.fake_H, self.real_H)
         l_pix.backward()
         self.optimizer_G.step()
 
-        # set log
-        self.log_dict['l_pix'] = l_pix.item()
+        # pnsr
+        psnr = self.get_psnr()
 
-    def test(self):
+        # set log
+        self.log_dict['l_pix'] = torch.mean(l_pix).item()
+        self.log_dict['psnr'] = torch.mean(psnr).item()
+
+    def get_psnr(self):
+        # hr, sr in range (0, 255)
+        mse = self.mse_criterion(self.real_H, self.fake_H)
+        psnr = 20 * torch.log10(255. / torch.sqrt(mse))
+        return psnr
+
+    def mixup(self, lrs, hrs, lrx2, alpha=2):
+        lam = np.random.beta(alpha, alpha)
+        index = np.random.randint(0, lrs.shape[0])
+        lrs = lrs * lam + (1 - lam) * lrs[index]
+        hrs = hrs * lam + (1 - lam) * hrs[index]
+        lrx2 = lrx2 * lam + (1 - lam) * lrx2[index]
+        return lrs, hrs, lrx2
+    
+    def mixup_enhance(self, lrs, hrs, lrx2, alpha=2):
+        lam = np.random.beta(alpha, alpha)
+        assert (lrs.shape[0] % 2) == 0
+        lrs[0::2] = lrs[0::2] * lam + (1 - lam) * lrs[1::2]
+        hrs[0::2] = hrs[0::2] * lam + (1 - lam) * hrs[1::2]
+        lrx2[0::2] = lrx2[0::2] * lam + (1 - lam) * lrx2[1::2]
+        return lrs, hrs, lrx2
+    
+
+    def test(self, need_LQX2=True):
         self.netG.eval()
         with torch.no_grad():
-            self.fake_H = self.netG(self.var_L)
+            if need_LQX2 :
+                self.fake_H = self.netG(self.var_L, self.LQX2)
+            else:
+                self.fake_H = self.netG(self.var_L)
         self.netG.train()
 
     def test_x8(self):

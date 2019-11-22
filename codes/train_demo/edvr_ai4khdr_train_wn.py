@@ -95,7 +95,7 @@ def main():
     dataset_ratio = 1 #200  # enlarge the size of each epoch
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':
-            train_set = TrainDataset()
+            train_set = TrainDataset(opt['scale'], dataset_opt['LQ_size'])
             train_size = int(math.ceil(len(train_set) / dataset_opt['batch_size']))
             total_iters = int(opt['train']['niter'])
             train_sampler = DistIterSampler(train_set, world_size, rank, dataset_ratio)

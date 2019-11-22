@@ -50,9 +50,9 @@ network_G:
 
 #### path
 path:
-  pretrain_model_G:  /workspace/nas_mengdongwei/mmsr/experiments/002_EDVR_wn_lr4e-4_600k_AI4KHDR/models/14000_G.pth
+  pretrain_model_G: # /workspace/mmsr/experiments/pretrained_models/EDVR_REDS_SR_M.pth
   strict_load: false
-  resume_state: /workspace/nas_mengdongwei/mmsr/experiments/002_EDVR_wn_lr4e-4_600k_AI4KHDR/training_state/14000.state
+  resume_state:
 
 #### training settings: learning rate scheme, loss
 train:
