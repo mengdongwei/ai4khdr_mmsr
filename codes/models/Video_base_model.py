@@ -138,7 +138,7 @@ class VideoBaseModel(BaseModel):
     def get_psnr(self):
         # hr, sr in range (0, 255)
         mse = self.mse_criterion(self.real_H*255, self.fake_H*255)
-        psnr = 10 * torch.log10(255*255 / mse)
+        psnr = 20 * torch.log10(255. / torch.sqrt(mse))
         return psnr
 
 
